@@ -184,9 +184,12 @@
             font-family: "STXingkai", "华文行楷", "KaiTi", serif;
             font-size: 64px;
             white-space: nowrap;
-            letter-spacing: 4px;
+            letter-spacing: 12px;
+            line-height: 1.4;
             opacity: 0;
             z-index: 3;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
         }
 
         .title-text.show {
@@ -195,6 +198,13 @@
 
         .title-text.hide {
             animation: t3Out 0.8s ease forwards;
+        }
+
+        /* 倒计时数字：横向显示 */
+        .title-text.horizontal {
+            writing-mode: horizontal-tb;
+            text-orientation: mixed;
+            letter-spacing: 0;
         }
 
         @keyframes t3In {
@@ -665,12 +675,15 @@
 
         function showNumber(num, onDone) {
             titleEl.classList.remove('hide');
-            titleEl.classList.add('show');
+            titleEl.classList.add('show', 'horizontal');
             titleEl.textContent = String(num);
             setTimeout(() => {
                 titleEl.classList.remove('show');
                 titleEl.classList.add('hide');
-                setTimeout(onDone, 600);
+                setTimeout(() => {
+                    titleEl.classList.remove('horizontal');
+                    onDone();
+                }, 600);
             }, 700);
         }
 
