@@ -530,11 +530,19 @@
         }
 
         /* ================= 照片散落（场景2/4共用） ================= */
-        function loadImage(url) {
+        function loadImage(url, retries = 3) {
             return new Promise((resolve) => {
                 const img = new Image();
+                let attempts = 0;
                 img.onload = () => resolve({ url, w: img.naturalWidth, h: img.naturalHeight });
-                img.onerror = () => resolve({ url, w: 160, h: 160 });
+                img.onerror = () => {
+                    attempts++;
+                    if (attempts < retries) {
+                        setTimeout(() => { img.src = url + (url.includes('?') ? '&' : '?') + '_r=' + attempts; }, 400);
+                    } else {
+                        resolve({ url, w: 160, h: 160, failed: true });
+                    }
+                };
                 img.src = url;
             });
         }
@@ -545,7 +553,7 @@
             const maxW = Math.max(220, Math.min(300, vw / 7));
             const gap = 12; // 照片之间的最小间距
 
-            Promise.all(urls.map(loadImage)).then((items) => {
+            return Promise.all(urls.map(loadImage)).then((items) => {
                 const placed = [];
                 items.forEach((item) => {
                     const scale = maxW / item.w;
@@ -586,6 +594,7 @@
                     img.style.zIndex = 2 + i;
                     img.style.setProperty('--rot', p.rot + 'deg');
                     img.style.animationDelay = (i * 0.25) + 's';
+                    img.onerror = () => { img.style.visibility = 'hidden'; };
                     container.appendChild(img);
                 });
             });
@@ -636,9 +645,12 @@
         sceneStart[2] = function () {
             const el = document.getElementById('scene2');
             if (!el.childElementCount) {
-                scatterInto(el, scene2Photos, null);
+                scatterInto(el, scene2Photos, null).then(() => {
+                    setTimeout(() => gotoScene(3), 5200);
+                });
+            } else {
+                setTimeout(() => gotoScene(3), 5200);
             }
-            setTimeout(() => gotoScene(3), 5200);
         };
 
         /* ================= 场景3：连播字幕 + 倒计时 ================= */
